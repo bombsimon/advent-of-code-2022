@@ -9,34 +9,26 @@ pub fn solve() {
 
 fn part_one(input: String) -> i32 {
     input
-        .lines()
-        .fold((0, 0), |(max, acc), x| {
-            if x.is_empty() {
-                (std::cmp::max(max, acc), 0)
-            } else {
-                let val = x.parse::<i32>().unwrap();
-                (max, acc + val)
-            }
+        .rsplit_terminator("\n\n")
+        .map(|group| {
+            group
+                .lines()
+                .fold(0, |acc, v| acc + v.parse::<i32>().unwrap())
         })
-        .0
+        .max()
+        .unwrap()
 }
 
 fn part_two(input: String) -> i32 {
-    let mut groups = Vec::new();
-    let mut current_sum = 0;
+    let mut groups = input
+        .rsplit_terminator("\n\n")
+        .map(|group| {
+            group
+                .lines()
+                .fold(0, |acc, v| acc + v.parse::<i32>().unwrap())
+        })
+        .collect::<Vec<_>>();
 
-    for x in input.lines() {
-        if x.is_empty() {
-            groups.push(current_sum);
-            current_sum = 0;
-        } else {
-            let val = x.parse::<i32>().unwrap();
-            current_sum += val;
-        }
-    }
-
-    // Push last group
-    groups.push(current_sum);
     groups.sort_by(|a, b| b.cmp(a));
 
     groups.iter().take(3).sum()
