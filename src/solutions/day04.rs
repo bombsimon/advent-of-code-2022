@@ -10,10 +10,8 @@ pub fn solve() {
 fn part_one(input: Vec<String>) -> i32 {
     input
         .iter()
-        .map(|line| {
-            let mut it = line.split(',');
-            (it.next().unwrap(), it.next().unwrap())
-        })
+        .map(String::as_str)
+        .map(to_pairs)
         .map(|(left, right)| (to_min_max(left), to_min_max(right)))
         .map(|((lmin, lmax), (rmin, rmax))| {
             i32::from((lmin >= rmin && lmax <= rmax) || (rmin >= lmin && rmax <= lmax))
@@ -24,13 +22,16 @@ fn part_one(input: Vec<String>) -> i32 {
 fn part_two(input: Vec<String>) -> i32 {
     input
         .iter()
-        .map(|line| {
-            let mut it = line.split(',');
-            (it.next().unwrap(), it.next().unwrap())
-        })
+        .map(String::as_str)
+        .map(to_pairs)
         .map(|(left, right)| (to_min_max(left), to_min_max(right)))
         .map(|((lmin, lmax), (rmin, rmax))| i32::from(lmin <= rmax && rmin <= lmax))
         .sum()
+}
+
+fn to_pairs(pair: &str) -> (&str, &str) {
+    let mut it = pair.split(',');
+    (it.next().unwrap(), it.next().unwrap())
 }
 
 fn to_min_max(range: &str) -> (i32, i32) {
