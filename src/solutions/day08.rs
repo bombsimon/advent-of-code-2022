@@ -45,22 +45,22 @@ fn part_one(input: Vec<String>) -> i32 {
 
     for (x, row) in grid.iter().enumerate() {
         for (y, me) in row.iter().enumerate() {
-            let directions_to_check = match (x, y) {
+            let direction_to_check = match (x, y) {
                 // Ignore corners.
-                (0, 0) => vec![],
-                (row, col) if row == 0 && col == width => vec![],
-                (row, col) if row == height && col == 0 => vec![],
-                (row, col) if row == height && col == width => vec![],
+                (0, 0) => None,
+                (row, col) if row == 0 && col == width => None,
+                (row, col) if row == height && col == 0 => None,
+                (row, col) if row == height && col == width => None,
 
-                (row, _) if row == 0 => vec![Direction::Down],
-                (row, _) if row == height => vec![Direction::Up],
-                (_, col) if col == 0 => vec![Direction::Right],
-                (_, col) if col == width => vec![Direction::Left],
+                (row, _) if row == 0 => Some(Direction::Down),
+                (row, _) if row == height => Some(Direction::Up),
+                (_, col) if col == 0 => Some(Direction::Right),
+                (_, col) if col == width => Some(Direction::Left),
 
-                (_, _) => vec![],
+                (_, _) => None,
             };
 
-            for direction in directions_to_check {
+            if let Some(direction) = direction_to_check {
                 check_direction(*me, (x as i32, y as i32), direction, &grid, &mut visible);
             }
         }
