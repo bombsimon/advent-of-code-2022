@@ -7,6 +7,7 @@ mod day06;
 mod day07;
 mod day08;
 mod day09;
+mod day10;
 
 pub fn solution_for(day: i32) {
     println!("Showing solution for day {}\n", day);
@@ -21,7 +22,7 @@ pub fn solution_for(day: i32) {
         7 => day07::solve(),
         8 => day08::solve(),
         9 => day09::solve(),
-        10 => todo!(),
+        10 => day10::solve(),
         11 => todo!(),
         12 => todo!(),
         13 => todo!(),
