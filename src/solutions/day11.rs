@@ -8,11 +8,11 @@ pub fn solve() {
 }
 
 fn part_one(input: String) -> i64 {
-    monkey_business(&input, 3, 20)
+    monkey_business(&input, |wl, _| wl / 3, 20)
 }
 
 fn part_two(input: String) -> i64 {
-    monkey_business(&input, 1, 10000)
+    monkey_business(&input, |wl, d| wl % d, 10000)
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -102,7 +102,10 @@ impl Instruction {
     }
 }
 
-fn monkey_business(input: &str, worry_level_reducer: i64, steps: usize) -> i64 {
+fn monkey_business<F>(input: &str, f: F, steps: usize) -> i64
+where
+    F: Fn(i64, i64) -> i64,
+{
     let mut monkeys = input
         .split("\n\n")
         .map(Instruction::new)
@@ -116,24 +119,21 @@ fn monkey_business(input: &str, worry_level_reducer: i64, steps: usize) -> i64 {
             monkey_inspection[current_monkey] += monkey.items.len() as i64;
 
             for item in monkey.items {
-                let worry_level = match (&monkey.operation, &monkey.operation_val) {
+                let wl = match (&monkey.operation, &monkey.operation_val) {
                     (Operator::Add, OperatorValue::N(n)) => item + n,
                     (Operator::Add, OperatorValue::Old) => item + item,
                     (Operator::Multiply, OperatorValue::N(n)) => item * n,
                     (Operator::Multiply, OperatorValue::Old) => item * item,
-                } / worry_level_reducer;
+                };
 
+                let worry_level = f(wl, div);
                 let monkey_idx = if worry_level % monkey.test_divisible_by == 0 {
                     monkey.throw_if_true
                 } else {
                     monkey.throw_if_false
                 };
 
-                monkeys[monkey_idx].items.push(if worry_level_reducer > 1 {
-                    worry_level
-                } else {
-                    worry_level % div
-                });
+                monkeys[monkey_idx].items.push(worry_level);
             }
 
             monkeys[monkey.monkey].items.clear();
