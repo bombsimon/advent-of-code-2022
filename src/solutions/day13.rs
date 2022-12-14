@@ -34,8 +34,43 @@ fn part_one(input: String) -> i64 {
     indicies.iter().sum::<usize>() as i64
 }
 
-fn part_two(_input: String) -> i64 {
-    0
+fn part_two(input: String) -> i64 {
+    let full_input = format!("{}\n[[2]]\n[[6]]", input);
+    let mut pairs = full_input
+        .lines()
+        .filter(|line| !line.is_empty())
+        .map(|line| {
+            let ch = line.chars().collect::<Vec<_>>();
+            let (_, mut pkt) = parse(&ch, 0);
+
+            pkt[0].tag = match line {
+                "[[2]]" => Some(2),
+                "[[6]]" => Some(6),
+                _ => None,
+            };
+
+            pkt[0].clone()
+        })
+        .collect::<Vec<_>>();
+
+    for i in 0..pairs.len() {
+        for j in 0..pairs.len() - i - 1 {
+            if compare_order(&[pairs[j].clone()], &[pairs[j + 1].clone()]) == Order::Incorrect {
+                pairs.swap(j, j + 1);
+            }
+        }
+    }
+
+    let (mut a, mut b) = (0, 0);
+    for (i, pkt) in pairs.iter().enumerate() {
+        match pkt.tag {
+            Some(2) => a = i + 1,
+            Some(6) => b = i + 1,
+            _ => (),
+        }
+    }
+
+    (a * b) as i64
 }
 
 #[derive(Debug, Clone)]
@@ -43,6 +78,7 @@ struct Packet {
     is_value: bool,
     value: i32,
     subpackets: Vec<Packet>,
+    tag: Option<i32>,
 }
 
 impl Packet {
@@ -51,6 +87,7 @@ impl Packet {
             is_value: true,
             value: v,
             subpackets: vec![],
+            tag: None,
         }
     }
 
@@ -59,6 +96,7 @@ impl Packet {
             is_value: false,
             value: 0,
             subpackets: sub,
+            tag: None,
         }
     }
 
@@ -161,7 +199,7 @@ mod tests {
     use crate::input;
 
     static SOLUTION_ONE: i64 = 13;
-    static SOLUTION_TWO: i64 = 0;
+    static SOLUTION_TWO: i64 = 140;
     static TEST_INPUT: &str = r#"
 [1,1,3,1,1]
 [1,1,5,1,1]
