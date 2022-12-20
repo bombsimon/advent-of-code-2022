@@ -2,6 +2,7 @@ use std::env;
 
 mod input;
 mod solutions;
+mod time;
 
 fn main() {
     let day = env::args()
