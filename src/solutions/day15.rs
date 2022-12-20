@@ -6,12 +6,20 @@ const GOAL: i64 = 2000000;
 pub fn solve() {
     let x = input::file_for_day(15);
 
-    println!("Solution part 1: {}", part_one(x.clone(), GOAL));
-    println!("Solution part 2: {}", part_two(x));
+    let p1_start = std::time::Instant::now();
+    let p1 = part_one(x.clone(), GOAL);
+    let p1_delta = p1_start.elapsed();
+
+    let p2_start = std::time::Instant::now();
+    let p2 = part_two(x);
+    let p2_delta = p2_start.elapsed();
+
+    println!("Solution part 1 ({:?}) {}", p1_delta, p1);
+    println!("Solution part 2 ({:?}): {}", p2_delta, p2);
 }
 
 fn part_one(input: Vec<String>, goal: i64) -> i64 {
-    let x = input
+    let mut x = input
         .iter()
         .map(|l| {
             l.replace("Sensor at ", "")
@@ -28,21 +36,39 @@ fn part_one(input: Vec<String>, goal: i64) -> i64 {
 
             ((x1, y1), (x2, y2))
         })
+        .filter_map(|(sensor, beacon)| {
+            let (x1, y1) = sensor;
+            let (x2, y2) = beacon;
+            let manhattan_distance = (x1 - x2).abs() + (y1 - y2).abs();
+
+            let distance_to_goal = (goal - y1).abs();
+            if distance_to_goal > manhattan_distance {
+                return None;
+            }
+
+            let sidesteps = manhattan_distance - distance_to_goal;
+            let (x_start, x_end) = (x1 - sidesteps, x1 + sidesteps);
+
+            Some((x_start, x_end))
+        })
         .collect::<Vec<_>>();
 
-    let mut grid: HashSet<(i64, i64)> = HashSet::new();
+    x.sort();
 
-    for (sensor, beacon) in x {
-        let (x1, y1) = sensor;
-        let (x2, y2) = beacon;
-        let manhattan_distance = (x1 - x2).abs() + (y1 - y2).abs();
+    let mut stack = vec![x[0]];
+    for next in x.iter().skip(1) {
+        let last = stack.len() - 1;
 
-        // TODO: This is stupid, we don't need to check every coordinate, we could check ranges
-        // instead.
-        check_adjecent(&mut grid, sensor, manhattan_distance, goal);
+        if stack[0].0 <= next.0 && next.0 <= stack[last].1 {
+            stack[last].1 = next.1.max(stack[last].1);
+        } else {
+            stack.push(*next);
+        }
     }
 
-    grid.iter().filter(|(_, y)| y == &goal).count() as i64 - 1
+    stack
+        .iter()
+        .fold(0, |acc, (start, end)| acc + (end - start))
 }
 
 fn part_two(input: Vec<String>) -> i128 {
@@ -194,23 +220,6 @@ fn line_intersection(
     Some((x, y))
 }
 
-fn check_adjecent(grid: &mut HashSet<(i64, i64)>, (x, y): (i64, i64), distance: i64, goal: i64) {
-    for i in -distance..=distance {
-        let y1 = y + i;
-        if y1 != goal {
-            continue;
-        }
-
-        let sidesteps = (i.abs() - distance).abs();
-        for j in -sidesteps..=sidesteps {
-            let pos = (x + j, y1);
-            if grid.get(&pos).is_none() {
-                grid.insert(pos);
-            }
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use crate::input;
@@ -242,6 +251,10 @@ Sensor at x=20, y=1: closest beacon is at x=15, y=3"#;
 
     #[test]
     fn part_two() {
+        // This test is flaky since with the smaller example there are areas with intersecting
+        // lines which is _inside_ a diamond which the current solution does not account for. With
+        // the real input the area is big enough to only give one point with 4 intersecting
+        // neighbors.
         let x = input::test_vec(TEST_INPUT);
         assert_eq!(super::part_two(x), SOLUTION_TWO);
     }
