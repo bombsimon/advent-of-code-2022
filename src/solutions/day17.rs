@@ -8,7 +8,7 @@ pub fn solve() {
     println!("Solution part 2: {}", part_two(x));
 }
 
-fn part_one(input: String) -> i32 {
+fn part_one(input: String) -> i64 {
     let mut b = Board {
         current_shape: Shape::HorizontalBar(2, 4),
         arena: HashSet::new(),
@@ -32,8 +32,96 @@ fn part_one(input: String) -> i32 {
     b.highest_block
 }
 
-fn part_two(_input: String) -> i32 {
-    0
+fn part_two(input: String) -> i64 {
+    let mut b = Board {
+        current_shape: Shape::HorizontalBar(2, 4),
+        arena: HashSet::new(),
+        highest_block: 0,
+    };
+
+    let mut blocks_at_rest = 0i64;
+    let mut last_blocks_at_rest = 0i64;
+    let mut last_highest_block = 0i64;
+    let mut total_iterations = 0;
+    let mut instruction_idx = 0;
+    let mut round_of_instructions = 0;
+    let mut total_1721 = 0;
+
+    let mut visualize = false;
+    // let mut seen_combination = HashSet::new();
+
+    for step in input.trim().chars().cycle() {
+        // for (ii, s) in input.trim().chars().enumerate() {
+        //     if j == ii {
+        //         print!("[{}]", s);
+        //     } else {
+        //         print!("{}", s);
+        //     }
+        // }
+        // println!();
+
+        // if k > input.len()
+        //     && seen_combination
+        //         .get(&(j, b.current_shape.clone()))
+        //         .is_some()
+        //     && b.current_shape
+        //         .coords()
+        //         .iter()
+        //         .map(|(_x, y)| *y)
+        //         .min()
+        //         .unwrap_or(0)
+        //         <= b.highest_block
+        visualize = if total_iterations > 0 && instruction_idx == 0 {
+            total_1721 = if blocks_at_rest - last_blocks_at_rest == 1721 {
+                total_1721 + 1
+            } else {
+                total_1721
+            };
+
+            println!(
+                "round={:<4} highest_block={:<8} diff_since_last={:<6} blocks_at_rest={:<8} diff_since_last_round={:<6} starting_with={:?}",
+                round_of_instructions,
+                b.highest_block,
+                b.highest_block - last_highest_block,
+                blocks_at_rest,
+                blocks_at_rest - last_blocks_at_rest,
+                //total_1721,
+                b.current_shape,
+            );
+
+            last_blocks_at_rest = blocks_at_rest;
+            last_highest_block = b.highest_block;
+            round_of_instructions += 1;
+
+            blocks_at_rest % 100000 == 0
+        } else {
+            false
+        };
+
+        b.push(step);
+        if !b.push('v') {
+            b.lock_shape();
+
+            blocks_at_rest += 1;
+        }
+
+        if visualize {
+            b.visualize();
+            input::print_and_wait(format!(
+                "i={} j={} k={} l={}",
+                blocks_at_rest, instruction_idx, total_iterations, round_of_instructions
+            ));
+        }
+
+        instruction_idx = if instruction_idx == input.len() - 1 {
+            0
+        } else {
+            instruction_idx + 1
+        };
+        total_iterations += 1;
+    }
+
+    b.highest_block
 }
 
 /// A shape represents a block that can have one of four different shapes:
@@ -44,18 +132,18 @@ fn part_two(_input: String) -> i32 {
 ///               ###       #        #        ##
 ///                #      ###        #
 ///                                  #
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 enum Shape {
-    HorizontalBar(i32, i32),
-    Cross(i32, i32),
-    Angle(i32, i32),
-    VerticalBar(i32, i32),
-    Square(i32, i32),
+    HorizontalBar(i64, i64),
+    Cross(i64, i64),
+    Angle(i64, i64),
+    VerticalBar(i64, i64),
+    Square(i64, i64),
 }
 
 impl Shape {
-    fn coords(&self) -> HashSet<(i32, i32)> {
-        let mut coords: HashSet<(i32, i32)> = HashSet::new();
+    fn coords(&self) -> HashSet<(i64, i64)> {
+        let mut coords: HashSet<(i64, i64)> = HashSet::new();
 
         match self {
             Self::HorizontalBar(x, y) => {
@@ -99,8 +187,8 @@ impl Shape {
 #[derive(Debug)]
 struct Board {
     current_shape: Shape,
-    arena: HashSet<(i32, i32)>,
-    highest_block: i32,
+    arena: HashSet<(i64, i64)>,
+    highest_block: i64,
 }
 
 impl Board {
@@ -203,7 +291,7 @@ impl Board {
     fn visualize(&self) {
         let shape = self.current_shape.coords();
 
-        for y in (0..=self.highest_block + 7).rev() {
+        for y in (self.highest_block - 40..=self.highest_block + 7).rev() {
             print!("{:<5}", y);
 
             for x in -1..=7 {
@@ -229,8 +317,8 @@ impl Board {
 
 #[cfg(test)]
 mod tests {
-    static SOLUTION_ONE: i32 = 3068;
-    static SOLUTION_TWO: i32 = 0;
+    static SOLUTION_ONE: i64 = 3068;
+    static SOLUTION_TWO: i64 = 1514285714288;
     static TEST_INPUT: &str = r#">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>"#;
 
     #[test]
